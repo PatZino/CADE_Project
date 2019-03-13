@@ -2,22 +2,22 @@ import numpy as np
 import random
 
 
-def objective_function(x):
-    sum = 0
-    for i in range(len(x)):
-        sum += x[i]**2
-    return sum
-
-
 # generate initial parameters of each techniques
-dimension = 5
-bounds = [(-10, 10)] * dimension
+dimension = 15
+bounds = [(-3, 3)] * dimension
 max_gen = 10
-population_size = 30
+population_size = 20
 acceptedNumber = round(population_size * 0.20)
 elites = 1
 mutation_factor = 0.8
 crossover_probability = 0.7
+
+
+def objective_function(x):
+    sum = 0
+    for i in range(dimension):
+        sum += x[i]**2
+    return sum
 
 
 def cade(objective_function, max_gen, bounds, population_size, dimension):
@@ -47,9 +47,13 @@ def cade(objective_function, max_gen, bounds, population_size, dimension):
 
     CA_population = np.asarray([Auxiliary_population[p] for p in range(int(initial_participation_ratio))])
     # print(CA_population)
+    CAfitness = np.asarray([objective_function(ind) for ind in CA_population])
+    print("\nCAfitness : ", CAfitness, "\n\n")
 
     DE_population = np.asarray(
         [Auxiliary_population[p] for p in range(int(initial_participation_ratio), population_size)])
+    DEfitness = np.asarray([objective_function(ind) for ind in DE_population])
+    print("\nDEfitness : ", DEfitness, "\n\n")
 
 # -------------------------CA-----------------------------------------------------------
 
@@ -111,7 +115,7 @@ def cade(objective_function, max_gen, bounds, population_size, dimension):
             acceptedMax = max(accepted, key=lambda v: v["individuals"][i])
             beliefspace["normative"][i][1] = acceptedMax["individuals"][i]
 
-    def culturalSearch(initial_population, bounds,  acceptedNumber, elites):
+    def culturalAlgorithm(initial_population, bounds,  acceptedNumber, elites):
         # initial population
         population = format_population(initial_population)
         population_size = len(population)
@@ -157,7 +161,7 @@ def cade(objective_function, max_gen, bounds, population_size, dimension):
     CA_pop = list()
     for i in range(len(CA_population)):
         initial_ca_population = CA_population.tolist()
-        Evolved_CA, Evolved_CA_Fitness = culturalSearch(initial_ca_population, bounds, acceptedNumber, elites)
+        Evolved_CA, Evolved_CA_Fitness = culturalAlgorithm(initial_ca_population, bounds, acceptedNumber, elites)
         CA.append(Evolved_CA_Fitness)
         CA_pop.append(Evolved_CA)
     print(CA)
@@ -205,32 +209,49 @@ def cade(objective_function, max_gen, bounds, population_size, dimension):
     # Evolved DE Population using DE technique
     print("Evolved DE")
     DE = list()
-    bestDE = list()
+    DE_pop = list()
     for best, fitness in differential_evolution(objective_function, DE_population, mutation_factor,
                                                 crossover_probability):
-        bestDE.append(best)
+        DE_pop.append(best)
         DE.append(fitness)
     print(DE, "\n\n")
-    # print(bestDE)
     print("\n\n")
 
 # ---------------------------------------------------------------------------------------------
 
-    s = []
-    numTrialVector = 0
-    #for i in range(max_gen):
+    s = list()
+    d = list()
+    numTrialVectorCA = 0
+    numTrialVectorDE = 0
+
+    # Number of trial vector for CA algorithm
     for j in range(len(CA_population)):
-        if CA[j] < DE[j]:
+        if CA[j] < CAfitness[j]:
             t = 1
             s.append(t)
-            numTrialVector += t
+            numTrialVectorCA += t
         else:
             t = 0
             s.append(t)
-    print("s: ", s, "\n")
-    print("numTrialVector = ", numTrialVector)
+            CA_pop[j] = CA_population[j]
+    print("Last item on the list", CA[-1])  # index the last item in a list
+    print("\ns: ", s, "\n")
+    print("numTrialVectorCA = ", numTrialVectorCA)
 
-    cade_pop = np.concatenate((CA_pop, bestDE), axis=0)
+    # Number of trial vector for DE algorithm
+    for j in range(len(DE_population)):
+        if DE[j] < DEfitness[j]:
+            t = 1
+            d.append(t)
+            numTrialVectorDE += t
+        else:
+            t = 0
+            d.append(t)
+            DE_pop[j] = DE_population[j]
+    print("\nd: ", d, "\n")
+    print("numTrialVectorDE = ", numTrialVectorDE)
+
+    cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)
 
     yield cade_pop
 
