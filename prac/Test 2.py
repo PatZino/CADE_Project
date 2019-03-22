@@ -1,26 +1,23 @@
 import numpy as np
 import random
+import functionSelection
 
+
+# ------------------------ Test Functions --------------------------------------
+func = functionSelection.funct
 
 # generate initial parameters of each techniques
-dimension = 15
-bounds = [(-3, 3)] * dimension
-max_gen = 10
-population_size = 20
+dimension = 3
+bounds = [(-1, 1)] * dimension
+max_gen = 30
+population_size = 1000
 acceptedNumber = round(population_size * 0.20)
 elites = 1
 mutation_factor = 0.8
 crossover_probability = 0.7
 
 
-def objective_function(x):
-    sum = 0
-    for i in range(dimension):
-        sum += x[i]**2
-    return sum
-
-
-def cade(objective_function, max_gen, bounds, population_size, dimension):
+def cade(func, max_gen, bounds, population_size, dimension):
     # Generate initial overall shared population
     population = np.random.rand(population_size, dimension)
     lower_bound, upper_bound = np.asarray(bounds).T
@@ -32,7 +29,7 @@ def cade(objective_function, max_gen, bounds, population_size, dimension):
     initial_participation_ratio = int(population_size / 2)
 
     # evaluate the initial population
-    fitness = np.asarray([objective_function(ind) for ind in initial_population])
+    fitness = np.asarray([func(ind) for ind in initial_population])
     # print("\nfitness : ", fitness, "\n\n")
     # var1 = fitness[:initial_participation_ratio]
     # print("var1", var1)
@@ -47,12 +44,12 @@ def cade(objective_function, max_gen, bounds, population_size, dimension):
 
     CA_population = np.asarray([Auxiliary_population[p] for p in range(int(initial_participation_ratio))])
     # print(CA_population)
-    CAfitness = np.asarray([objective_function(ind) for ind in CA_population])
+    CAfitness = np.asarray([func(ind) for ind in CA_population])
     print("\nCAfitness : ", CAfitness, "\n\n")
 
     DE_population = np.asarray(
         [Auxiliary_population[p] for p in range(int(initial_participation_ratio), population_size)])
-    DEfitness = np.asarray([objective_function(ind) for ind in DE_population])
+    DEfitness = np.asarray([func(ind) for ind in DE_population])
     print("\nDEfitness : ", DEfitness, "\n\n")
 
 # -------------------------CA-----------------------------------------------------------
@@ -125,7 +122,7 @@ def cade(objective_function, max_gen, bounds, population_size, dimension):
 
         # evaluate the population
         for i in population:
-            i["fitness"] = objective_function(i["individuals"])
+            i["fitness"] = func(i["individuals"])
 
         best = min(population, key=lambda i: i["fitness"])
         situationalBeliefspace(beliefspace, best)
@@ -137,7 +134,7 @@ def cade(objective_function, max_gen, bounds, population_size, dimension):
                 newIndividualsPop = mutate(population[i], beliefspace, bounds)
                 individualsPop.append(newIndividualsPop)
             for i in individualsPop:
-                i["fitness"] = objective_function(i["individuals"])
+                i["fitness"] = func(i["individuals"])
             population = selection(population_size, individualsPop + population, elites)
             # current best
             best = min(population, key=lambda i: i["fitness"])
@@ -167,12 +164,12 @@ def cade(objective_function, max_gen, bounds, population_size, dimension):
     print(CA)
     print("\n\n")
 # ---------------------------------DE---------------------------------------------------------
-    def differential_evolution(objective_function, initial_de_population, mutation_factor,
+    def differential_evolution(func, initial_de_population, mutation_factor,
                                crossover_probability):
 
         population_size = len(initial_de_population)
         max_gen = population_size
-        fitness = np.asarray([objective_function(ind) for ind in initial_de_population])
+        fitness = np.asarray([func(ind) for ind in initial_de_population])
         # print("fitness : ", fitness)
         best_index = np.argmin(fitness)
         best = initial_de_population[best_index]
@@ -193,7 +190,7 @@ def cade(objective_function, max_gen, bounds, population_size, dimension):
 
                 new_population = lower_bound + trial_vector * difference
 
-                new_fitness = objective_function(new_population)
+                new_fitness = func(new_population)
 
                 if new_fitness < fitness[j]:
                     fitness[j] = new_fitness
@@ -210,7 +207,7 @@ def cade(objective_function, max_gen, bounds, population_size, dimension):
     print("Evolved DE")
     DE = list()
     DE_pop = list()
-    for best, fitness in differential_evolution(objective_function, DE_population, mutation_factor,
+    for best, fitness in differential_evolution(func, DE_population, mutation_factor,
                                                 crossover_probability):
         DE_pop.append(best)
         DE.append(fitness)
@@ -251,10 +248,24 @@ def cade(objective_function, max_gen, bounds, population_size, dimension):
     print("\nd: ", d, "\n")
     print("numTrialVectorDE = ", numTrialVectorDE)
 
+    """
+    for j in range(len(DE_population)):
+        if DE[j] < DEfitness[j]:
+            t = 1
+            d.append(t)
+            numTrialVectorDE += t
+        else:
+            t = 0
+            d.append(t)
+            DE_pop[j] = DE_population[j]
+    print("\nd: ", d, "\n")
+    print("numTrialVectorDE = ", numTrialVectorDE)
+
+    """
     cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)
 
     yield cade_pop
 
 
-for k in cade(objective_function, max_gen, bounds, population_size, dimension):
+for k in cade(func, max_gen, bounds, population_size, dimension):
     print("\n\nCADE population\n", k)
