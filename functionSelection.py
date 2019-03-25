@@ -2,7 +2,7 @@ import cadeFunctions
 
 
 print("Functions")
-option = input("Select a function by entering a number: ")
+option = input("Select a function by entering a number between the range of 1 - 15: ")
 
 
 def funct(x):

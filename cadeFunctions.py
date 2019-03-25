@@ -139,13 +139,3 @@ def function_fifteen(x):
 
 # b =function_fifteen(alist)
 # print("function fifteen: ", b)
-
-
-
-
-
-
-
-
-
-
