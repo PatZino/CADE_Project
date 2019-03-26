@@ -206,7 +206,6 @@ def cade(func, max_gen, bounds, population_size, dimension):
                         best_index = j
                         best = new_population
             yield best, fitness[best_index]
-            # return best, fitness[best_index]
 
 # ----------------------------------End DE----------------------------------------------------
 
