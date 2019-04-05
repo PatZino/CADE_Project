@@ -10,8 +10,8 @@ func = functionSelection.funct
 # ---------------generate initial parameters of each techniques ----------------
 dimension = 3
 bounds = [(-5, 5)] * dimension
-max_gen = 30
-population_size = 500
+max_gen = 100
+population_size = 800
 acceptedNumber = round(population_size * 0.20)
 elites = 1
 mutation_factor = 0.8

@@ -35,5 +35,5 @@ def funct(x):
     elif option == 14:
         func1 = cadeFunctions.function_fourteen(x)
     else:
-        func1 = cadeFunctions.function_three(x)
+        func1 = cadeFunctions.function_fifteen(x)
     return func1
