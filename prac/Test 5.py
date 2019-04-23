@@ -225,78 +225,67 @@ def cade(func, max_gen, bounds, population_size, dimension):
 
                 if i == (max_gen - 2):
                     daho = new_population
+
                     print("daho: ", daho)
 
                 if i == (max_gen-1):
                     baho = new_population
                     print("baho: ", baho)
 
-            yield daho, baho, best, fitness[best_index]
+            yield best, fitness[best_index]
 
 # ----------------------------------End DE----------------------------------------------------
 
     # Evolved DE Population using DE technique
     DE = list()
     DE_pop = list()
-    # dah = list()
-    # bah = list()
-    for daho, baho, best, fitness in differential_evolution(func, DE_population, mutation_factor,
+    for best, fitness in differential_evolution(func, DE_population, mutation_factor,
                                                 crossover_probability):
         DE_pop.append(best)
         DE.append(fitness)
-        print("dah: \n", daho)
-        print("bah: \n", baho)
-        # dah.append(daho)
-        # bah.append(daho)
     print("Evolved DE Fitness: \n", DE, "\n")
     print("Evolved DE Pop: \n", DE_pop)
     print("\n\n")
 
-# ---------------------------------------------------------------------------------------------
-    fitness_ser = np.asarray([func(ind) for ind in ser])
-    fitness_cer = np.asarray([func(ind) for ind in cer])
-    s = list()
-    d = list()
-    numTrialVectorCA = 0
-    numTrialVectorDE = 0
+# ---------------------------------------------------------------------------------------------#
 
-    # Number of trial vector for CA algorithm
-    for j in range(len(ser)):
-        if fitness_cer[j] < fitness_ser[j]:
-            t = 1
-            s.append(t)
-            numTrialVectorCA += t
-        else:
-            t = 0
-            s.append(t)
+    for i in range(max_gen):
+        fitness_ser = np.asarray([func(ind) for ind in ser])
+        fitness_cer = np.asarray([func(ind) for ind in cer])
+        s = list()
+        d = list()
+        numTrialVectorCA = 0
+        numTrialVectorDE = 0
 
-    print("\ns: ", s, "\n")
-    print("number of successful Trial Vector for CA = ", numTrialVectorCA)
+        # Number of trial vector for CA algorithm
+        for j in range(len(ser)):
+            if fitness_cer[j] < fitness_ser[j]:
+                t = 1
+                s.append(t)
+                numTrialVectorCA += t
+            else:
+                t = 0
+                s.append(t)
 
-    # Number of trial vector for DE algorithm
-    for j in range(len(DE_population)):
-        if DE[j] < DEfitness[j]:
-            t = 1
-            d.append(t)
-            numTrialVectorDE += t
-        else:
-            t = 0
-            d.append(t)
+        print("\ns: ", s, "\n")
+        print("number of successful Trial Vector for CA = ", numTrialVectorCA)
 
-    print("\nd: ", d, "\n")
-    print("number of successful Trial Vector for DE = ", numTrialVectorDE)
-    '''
-    # Quality funtion for CA
-    quality_func_CA = (dif_fit - T_CA) / dif_fit
-    print("quality_func_CA: ", quality_func_CA)
+        # Number of trial vector for DE algorithm
+        for j in range(len(DE_population)):
+            if DE[j] < DEfitness[j]:
+                t = 1
+                d.append(t)
+                numTrialVectorDE += t
+            else:
+                t = 0
+                d.append(t)
 
-    # Quality funtion for DE
-    quality_func_DE = (dif_fit - T_DE) / dif_fit
-    print("quality_func_DE: ", quality_func_DE)
-    '''
-    cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)
+        print("\nd: ", d, "\n")
+        print("number of successful Trial Vector for DE = ", numTrialVectorDE)
 
-    yield cade_pop
+        cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)
+
+        yield cade_pop
 
 
 for k in cade(func, max_gen, bounds, population_size, dimension):

@@ -9,8 +9,8 @@ func = functionSelection.funct
 # ---------------generate initial parameters of each techniques ----------------
 dimension = 3
 bounds = [(-1, 1)] * dimension
-max_gen = 3
-population_size = 10
+max_gen = 5
+population_size = 12
 acceptedNumber = round(population_size * 0.20)
 elites = 1
 mutation_factor = 0.8
@@ -144,28 +144,28 @@ def cade(func, max_gen, bounds, population_size, dimension):
                 newIndividualsPop = mutate(population[i], beliefspace, bounds)
                 individualsPop.append(newIndividualsPop)
             # print("ind pop: \n", individualsPop)
-            for i in individualsPop:
-                i["fitness"] = func(i["individuals"])
-                z.append(i["fitness"])
+            for j in individualsPop:
+                j["fitness"] = func(j["individuals"])
+                z.append(j["fitness"])
 
-            # if y[k] < z[k]:
-            if y[k] < i["fitness"]:
-                t = 1
-                n.append(t)
-                nstv += t
-                nstv_list.append(nstv)
-            else:
-                t = 0
-                n.append(t)
-                nstv += t
-                nstv_list.append(nstv)
-            print("n: ", n)
-            print(k, "nstv: ", nstv)
-            print("nstv_list: ", nstv_list)
+            for i in range(population_size):
+                if y[i] < z[i]:
+                    t = 1
+                    n.append(t)
+                    nstv += t
+                    # nstv_list.append(nstv)
+                else:
+                    t = 0
+                    n.append(t)
+                    # nstv_list.append(nstv)
+            # print("n: ", n)
+            # print("nstv: ", nstv)
+            # print("nstv_list: ", nstv_list)
 
             population = selection(population_size, individualsPop + population, elites)
             # current best
             best = min(population, key=lambda i: i["fitness"])
+            print("best: ", best["fitness"])
 
             # situational knowledge update
             situationalBeliefspace(beliefspace, best)
