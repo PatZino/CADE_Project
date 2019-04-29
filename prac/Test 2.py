@@ -10,8 +10,8 @@ func = functionSelection.funct
 # ---------------generate initial parameters of each techniques ----------------
 dimension = 3
 bounds = [(-5, 5)] * dimension
-max_gen = 6
-population_size = 20
+max_gen = 30
+population_size = 200
 acceptedNumber = round(population_size * 0.20)
 elites = 1
 mutation_factor = 0.8
@@ -194,6 +194,7 @@ def cade(func, max_gen, bounds, population_size, dimension):
         # print("fitness : ", fitness)
         best_index = np.argmin(fitness)
         best = initial_de_population[best_index]
+        best2 = initial_de_population[best_index]
         daho = list()
         baho = list()
 
@@ -223,38 +224,41 @@ def cade(func, max_gen, bounds, population_size, dimension):
                         best_index = j
                         best = new_population
 
-                if i == (max_gen - 2):
-                    daho = new_population
-                    print("daho: ", daho)
+                if new_fitness < fitness[j] and i == (max_gen - 2):
+                    fitness[j] = new_fitness
+                    population[j] = trial_vector
+                    if new_fitness < fitness[best_index]:
+                        best_index = j
+                        best2 = new_population
 
-                if i == (max_gen-1):
-                    baho = new_population
-                    print("baho: ", baho)
-
-            yield daho, baho, best, fitness[best_index]
+            yield daho, best2, best, fitness[best_index]
 
 # ----------------------------------End DE----------------------------------------------------
 
     # Evolved DE Population using DE technique
     DE = list()
     DE_pop = list()
-    # dah = list()
-    # bah = list()
-    for daho, baho, best, fitness in differential_evolution(func, DE_population, mutation_factor,
+    dah = list()
+    bah = list()
+    for daho, best2, best, fitness in differential_evolution(func, DE_population, mutation_factor,
                                                 crossover_probability):
         DE_pop.append(best)
         DE.append(fitness)
-        print("dah: \n", daho)
-        print("bah: \n", baho)
+        # print("dah: \n", daho)
+        # print("bah: \n", baho)
         # dah.append(daho)
-        # bah.append(daho)
+        bah.append(best2)
     print("Evolved DE Fitness: \n", DE, "\n")
-    print("Evolved DE Pop: \n", DE_pop)
+    print("Evolved DE Pop: \n", DE_pop, "\n")
+    # print("dah: \n", dah)
+    print("bah: \n", bah)
     print("\n\n")
 
 # ---------------------------------------------------------------------------------------------
     fitness_ser = np.asarray([func(ind) for ind in ser])
     fitness_cer = np.asarray([func(ind) for ind in cer])
+    fitness_del = np.asarray([func(ind) for ind in DE_pop])
+    fitness_del2 = np.asarray([func(ind) for ind in bah])
     s = list()
     d = list()
     numTrialVectorCA = 0
@@ -275,7 +279,7 @@ def cade(func, max_gen, bounds, population_size, dimension):
 
     # Number of trial vector for DE algorithm
     for j in range(len(DE_population)):
-        if DE[j] < DEfitness[j]:
+        if fitness_del[j] < fitness_del2[j]:
             t = 1
             d.append(t)
             numTrialVectorDE += t
@@ -285,15 +289,7 @@ def cade(func, max_gen, bounds, population_size, dimension):
 
     print("\nd: ", d, "\n")
     print("number of successful Trial Vector for DE = ", numTrialVectorDE)
-    '''
-    # Quality funtion for CA
-    quality_func_CA = (dif_fit - T_CA) / dif_fit
-    print("quality_func_CA: ", quality_func_CA)
 
-    # Quality funtion for DE
-    quality_func_DE = (dif_fit - T_DE) / dif_fit
-    print("quality_func_DE: ", quality_func_DE)
-    '''
     cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)
 
     yield cade_pop

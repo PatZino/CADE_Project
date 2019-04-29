@@ -195,7 +195,9 @@ def cade(func, max_gen, bounds, population_size, dimension):
         best_index = np.argmin(fitness)
         best = initial_de_population[best_index]
         daho = list()
+        daho2 = list()
         baho = list()
+        baho2 = list()
 
         for i in range(max_gen):
             for j in range(population_size):
@@ -225,8 +227,8 @@ def cade(func, max_gen, bounds, population_size, dimension):
 
                 if i == (max_gen - 2):
                     daho = new_population
-
-                    print("daho: ", daho)
+                    daho2.append(daho)
+                    print("daho2: ", daho2)
 
                 if i == (max_gen-1):
                     baho = new_population
