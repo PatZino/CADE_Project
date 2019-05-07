@@ -10,8 +10,8 @@ func = functionSelection.funct
 # ---------------generate initial parameters of each techniques ----------------
 dimension = 3
 bounds = [(-5, 5)] * dimension
-max_gen = 60
-population_size = 50
+max_gen = 8000
+population_size = 10
 acceptedNumber = round(population_size * 0.20)
 elites = 1
 mutation_factor = 0.8
@@ -24,7 +24,8 @@ crossover_probability = 0.7
 
 def cade(func, max_gen, bounds, population_size, dimension):
     # Generate initial overall shared population
-    delta = 0
+    # updated_cade_pop = list()
+    quality_func = 0
     population = np.random.rand(population_size, dimension)
     lower_bound, upper_bound = np.asarray(bounds).T
     difference = np.fabs(upper_bound - lower_bound)
@@ -255,10 +256,12 @@ def cade(func, max_gen, bounds, population_size, dimension):
     print("\n\n")
 
 # ---------------------------------------------------------------------------------------------
-    new_cade_pop = np.concatenate((CA_pop, DE_pop), axis=0) # new cade population
 
+    updated_cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)
+    fitness_updated_cade = np.asarray([func(ind) for ind in updated_cade_pop])
 # ----------------------- loop in the cade algorithm -------------------------------------------
-    for m in range(max_gen):
+    # for m in range(max_gen):
+    while quality_func != 1:
         fitness_ser = np.asarray([func(ind) for ind in ser])
         fitness_cer = np.asarray([func(ind) for ind in cer])
         fitness_del = np.asarray([func(ind) for ind in DE_pop])
@@ -282,7 +285,7 @@ def cade(func, max_gen, bounds, population_size, dimension):
         print("number of successful Trial Vector for CA = ", numTrialVectorCA)
 
         # Number of trial vector for DE algorithm
-        for j in range(len(DE_population)):
+        for j in range(len(DE_pop)):
             if fitness_del[j] < fitness_del2[j]:
                 t = 1
                 d.append(t)
@@ -296,18 +299,67 @@ def cade(func, max_gen, bounds, population_size, dimension):
 
         if numTrialVectorCA > numTrialVectorDE:
             quality_func = (numTrialVectorCA - numTrialVectorDE) / numTrialVectorCA
+        elif numTrialVectorCA == 0 and numTrialVectorDE == 0:
+            break
         else:
             quality_func = (numTrialVectorDE - numTrialVectorCA) / numTrialVectorDE
-
         print("quality function: ", quality_func)
+        if quality_func == 1:
+            break
 
-        participation_ratio = quality_func * population_size
+        participation_ratio = np.int(quality_func * population_size)
         print("participation ratio: ", participation_ratio)
 
-        cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)
+        updated_cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)  # new cade population
+        fitness_updated_cade = np.asarray([func(ind) for ind in updated_cade_pop])  # updated fitness value
+        updated_Auxiliary_pop = updated_cade_pop[np.random.choice(updated_cade_pop.shape[0],
+                                                                  population_size, replace=False), :]
+        updated_DE_pop = np.asarray(
+            [updated_Auxiliary_pop[p] for p in range(int(participation_ratio), population_size)])
+        updated_CA_pop = np.asarray([updated_Auxiliary_pop[p] for p in range(int(participation_ratio))])
 
-    yield new_cade_pop
+        # Evolved CA Population using CA technique
+        CA = list()
+        CA_pop = list()
+        ser = list()
+        cer = list()
+        for i in range(len(updated_CA_pop)):
+            updated_ca_population = updated_CA_pop.tolist()
+            ser1, cer1, Evolved_CA, Evolved_CA_Fitness = culturalAlgorithm(updated_ca_population, bounds,
+                                                                           acceptedNumber, elites)
+            CA.append(Evolved_CA_Fitness)
+            CA_pop.append(Evolved_CA)
+            ser.append(ser1)
+            cer.append(cer1)
+        print("Evolved CA Fitness\n", CA)
+        print("\nEVOLVED CA POPULATION \n", CA_pop)
+        print("\nCA Second to the last generation \n", ser)
+        print("\nCA last generation \n", cer)
+        print("\n\n")
+
+        # Evolved DE Population using DE technique
+        DE = list()
+        DE_pop = list()
+        dah = list()
+        bah = list()
+        for daho, best2, best, fitness in differential_evolution(func, updated_DE_pop, mutation_factor,
+                                                                 crossover_probability):
+            DE_pop.append(best)
+            DE.append(fitness)
+            # print("dah: \n", daho)
+            # print("bah: \n", baho)
+            # dah.append(daho)
+            bah.append(best2)
+        print("Evolved DE Fitness: \n", DE, "\n")
+        print("Evolved DE Pop: \n", DE_pop, "\n")
+        # print("dah: \n", dah)
+        print("bah: \n", bah)
+        print("\n\n")
+
+        # cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)
+
+    yield updated_cade_pop, fitness_updated_cade
 
 
-for k in cade(func, max_gen, bounds, population_size, dimension):
-    print("\n\nCADE population\n", k)
+for p, q in cade(func, max_gen, bounds, population_size, dimension):
+    print("\n\nCADE population ", p, "\n\nfitness = ", q)
