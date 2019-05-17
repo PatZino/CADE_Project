@@ -1,7 +1,7 @@
 import numpy as np
 import random
 import functionSelection
-
+from matplotlib import pyplot as plt
 
 # ------------------------ Test Functions --------------------------------------
 func = functionSelection.funct
@@ -9,9 +9,9 @@ func = functionSelection.funct
 
 # ---------------generate initial parameters of each techniques ----------------
 dimension = 3
-bounds = [(-5, 5)] * dimension
-max_gen = 8000
-population_size = 10
+bounds = [(-1, 1)] * dimension
+max_gen = 30
+population_size = 100
 acceptedNumber = round(population_size * 0.20)
 elites = 1
 mutation_factor = 0.8
@@ -24,13 +24,12 @@ crossover_probability = 0.7
 
 def cade(func, max_gen, bounds, population_size, dimension):
     # Generate initial overall shared population
-    # updated_cade_pop = list()
-    quality_func = 0
     population = np.random.rand(population_size, dimension)
     lower_bound, upper_bound = np.asarray(bounds).T
     difference = np.fabs(upper_bound - lower_bound)
     initial_population = lower_bound + population * difference
     print("initial pop: \n", initial_population)
+    quality_func = 0
 
     # compute initial participation ratio
     initial_participation_ratio = int(population_size / 2)
@@ -53,12 +52,12 @@ def cade(func, max_gen, bounds, population_size, dimension):
     CA_population = np.asarray([Auxiliary_population[p] for p in range(int(initial_participation_ratio))])
     # print(CA_population)
     CAfitness = np.asarray([func(ind) for ind in CA_population])
-    print("\ninitial_CAfitness : \n", CAfitness, "\n\n")
+    # print("\ninitial_CAfitness : \n", CAfitness, "\n\n")
 
     DE_population = np.asarray(
         [Auxiliary_population[p] for p in range(int(initial_participation_ratio), population_size)])
     DEfitness = np.asarray([func(ind) for ind in DE_population])
-    print("\ninitial_DEfitness : \n", DEfitness, "\n\n")
+    # print("\ninitial_DEfitness : \n", DEfitness, "\n\n")
 
 # -------------------------CA-----------------------------------------------------------
 
@@ -69,8 +68,10 @@ def cade(func, max_gen, bounds, population_size, dimension):
         v = list()
         for i in range(len(candidate["individuals"])):
             x = rand_in_bounds(beliefs["normative"][i][0], beliefs["normative"][i][1])
-            if x < bounds[i][0]: x = bounds[i][0]
-            if x > bounds[i][1]: x = bounds[i][1]
+            if x < bounds[i][0]:
+                x = bounds[i][0]
+            if x > bounds[i][1]:
+                x = bounds[i][1]
             v.append(x)
         return {"individuals": v}
 
@@ -179,11 +180,11 @@ def cade(func, max_gen, bounds, population_size, dimension):
         CA_pop.append(Evolved_CA)
         ser.append(ser1)
         cer.append(cer1)
-    print("Evolved CA Fitness\n", CA)
-    print("\nEVOLVED CA POPULATION \n", CA_pop)
-    print("\nCA Second to the last generation \n", ser)
-    print("\nCA last generation \n", cer)
-    print("\n\n")
+    # print("Evolved CA Fitness\n", CA)
+    # print("\nEVOLVED CA POPULATION \n", CA_pop)
+    # print("\nCA Second to the last generation \n", ser)
+    # print("\nCA last generation \n", cer)
+    # print("\n\n")
 
 # ---------------------------------DE---------------------------------------------------------
     def differential_evolution(func, initial_de_population, mutation_factor,
@@ -249,18 +250,18 @@ def cade(func, max_gen, bounds, population_size, dimension):
         # print("bah: \n", baho)
         # dah.append(daho)
         bah.append(best2)
-    print("Evolved DE Fitness: \n", DE, "\n")
-    print("Evolved DE Pop: \n", DE_pop, "\n")
+    # print("Evolved DE Fitness: \n", DE, "\n")
+    # print("Evolved DE Pop: \n", DE_pop, "\n")
     # print("dah: \n", dah)
-    print("bah: \n", bah)
-    print("\n\n")
+    # print("bah: \n", bah)
+    # print("\n\n")
 
 # ---------------------------------------------------------------------------------------------
 
-    updated_cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)
+    updated_cade_pop = np.concatenate((DE_pop, CA_pop), axis=0)
     fitness_updated_cade = np.asarray([func(ind) for ind in updated_cade_pop])
 # ----------------------- loop in the cade algorithm -------------------------------------------
-    # for m in range(max_gen):
+
     while quality_func != 1:
         fitness_ser = np.asarray([func(ind) for ind in ser])
         fitness_cer = np.asarray([func(ind) for ind in cer])
@@ -281,8 +282,8 @@ def cade(func, max_gen, bounds, population_size, dimension):
                 t = 0
                 s.append(t)
 
-        print("\ns: ", s, "\n")
-        print("number of successful Trial Vector for CA = ", numTrialVectorCA)
+        # print("\ns: ", s, "\n")
+        # print("number of successful Trial Vector for CA = ", numTrialVectorCA)
 
         # Number of trial vector for DE algorithm
         for j in range(len(DE_pop)):
@@ -294,8 +295,8 @@ def cade(func, max_gen, bounds, population_size, dimension):
                 t = 0
                 d.append(t)
 
-        print("\nd: ", d, "\n")
-        print("number of successful Trial Vector for DE = ", numTrialVectorDE)
+        # print("\nd: ", d, "\n")
+        # print("number of successful Trial Vector for DE = ", numTrialVectorDE)
 
         if numTrialVectorCA > numTrialVectorDE:
             quality_func = (numTrialVectorCA - numTrialVectorDE) / numTrialVectorCA
@@ -303,20 +304,26 @@ def cade(func, max_gen, bounds, population_size, dimension):
             break
         else:
             quality_func = (numTrialVectorDE - numTrialVectorCA) / numTrialVectorDE
-        print("quality function: ", quality_func)
+        # print("quality function: ", quality_func)
         if quality_func == 1:
             break
 
         participation_ratio = np.int(quality_func * population_size)
-        print("participation ratio: ", participation_ratio)
+        # print("participation ratio: ", participation_ratio)
 
-        updated_cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)  # new cade population
+        updated_cade_pop = np.concatenate((DE_pop, CA_pop), axis=0)  # new cade population
         fitness_updated_cade = np.asarray([func(ind) for ind in updated_cade_pop])  # updated fitness value
         updated_Auxiliary_pop = updated_cade_pop[np.random.choice(updated_cade_pop.shape[0],
                                                                   population_size, replace=False), :]
-        updated_DE_pop = np.asarray(
-            [updated_Auxiliary_pop[p] for p in range(int(participation_ratio), population_size)])
-        updated_CA_pop = np.asarray([updated_Auxiliary_pop[p] for p in range(int(participation_ratio))])
+
+        if numTrialVectorCA < numTrialVectorDE:
+            updated_DE_pop = np.asarray(
+                [updated_Auxiliary_pop[p] for p in range(int(participation_ratio), population_size)])
+            updated_CA_pop = np.asarray([updated_Auxiliary_pop[p] for p in range(int(participation_ratio))])
+        else:
+            updated_DE_pop = np.asarray([updated_Auxiliary_pop[p] for p in range(int(participation_ratio))])
+            updated_CA_pop = np.asarray(
+                [updated_Auxiliary_pop[p] for p in range(int(participation_ratio), population_size)])
 
         # Evolved CA Population using CA technique
         CA = list()
@@ -331,11 +338,11 @@ def cade(func, max_gen, bounds, population_size, dimension):
             CA_pop.append(Evolved_CA)
             ser.append(ser1)
             cer.append(cer1)
-        print("Evolved CA Fitness\n", CA)
-        print("\nEVOLVED CA POPULATION \n", CA_pop)
-        print("\nCA Second to the last generation \n", ser)
-        print("\nCA last generation \n", cer)
-        print("\n\n")
+        # print("Evolved CA Fitness\n", CA)
+        # print("\nEVOLVED CA POPULATION \n", CA_pop)
+        # print("\nCA Second to the last generation \n", ser)
+        # print("\nCA last generation \n", cer)
+        # print("\n\n")
 
         # Evolved DE Population using DE technique
         DE = list()
@@ -350,11 +357,11 @@ def cade(func, max_gen, bounds, population_size, dimension):
             # print("bah: \n", baho)
             # dah.append(daho)
             bah.append(best2)
-        print("Evolved DE Fitness: \n", DE, "\n")
-        print("Evolved DE Pop: \n", DE_pop, "\n")
-        # print("dah: \n", dah)
-        print("bah: \n", bah)
-        print("\n\n")
+        # print("Evolved DE Fitness: \n", DE, "\n")
+        # print("Evolved DE Pop: \n", DE_pop, "\n")
+        # ---print("dah: \n", dah)
+        # print("bah: \n", bah)
+        # print("\n\n")
 
         # cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)
 
@@ -362,4 +369,12 @@ def cade(func, max_gen, bounds, population_size, dimension):
 
 
 for p, q in cade(func, max_gen, bounds, population_size, dimension):
-    print("\n\nCADE population ", p, "\n\nfitness = ", q)
+    # print("\n\nCADE population ", p, "\n\nfitness = ", q)
+    print("\n\nCADE population ", p, "fitness = ", q)
+    """
+    y = [1]
+    for i in range(2, population_size+1):
+        y.append(i)
+    plt.plot(y, q)
+    plt.show()
+    """
