@@ -1,21 +1,26 @@
 import numpy as np
 import random
 import functionSelection
+from scipy.stats import  cauchy
 from matplotlib import pyplot as plt
 
 # ------------------------ Test Functions --------------------------------------
 func = functionSelection.funct
+
+xin = [2, 3, 5]
+TestFunction = func(xin)
+print("TestFunction: ", TestFunction)
 # -----------------------End Test Functions ------------------------------------
 
 # ---------------generate initial parameters of each techniques ----------------
 dimension = 3
 bounds = [(-5, 5)] * dimension
-max_gen = 30
-population_size = 20
+max_gen = 2
+population_size = 8
 acceptedNumber = round(population_size * 0.20)
 elites = 1
-mutation_factor = 0.5
-crossover_probability = 0.5
+mutation_factor = np.random.standard_cauchy(1)
+crossover_probability = np.random.normal(0.5, 0.1, 1)
 # ------------------ End initial parameters -------------------------------------
 
 
@@ -56,8 +61,9 @@ def cade(func, max_gen, bounds, population_size, dimension):
 
     DE_population = np.asarray(
         [Auxiliary_population[p] for p in range(int(initial_participation_ratio), population_size)])
+    print("Initial DE_population \n", DE_population)
     DEfitness = np.asarray([func(ind) for ind in DE_population])
-    # print("\ninitial_DEfitness : \n", DEfitness, "\n\n")
+    print("\ninitial_DEfitness : \n", DEfitness, "\n\n")
 
 # -------------------------CA-----------------------------------------------------------
 
@@ -74,6 +80,10 @@ def cade(func, max_gen, bounds, population_size, dimension):
                 x = bounds[i][1]
             v.append(x)
         return {"individuals": v}
+
+    def mutateTopo():
+        y = np.random.normal(0, 1, dimension)
+        return y
 
     def selection(population_size, candidates, elites):
         new_population = list()
@@ -104,6 +114,7 @@ def cade(func, max_gen, bounds, population_size, dimension):
         beliefspace = {}
         beliefspace["normative"] = list()
         beliefspace["situational"] = None
+        beliefspace["topographical"] = list()
         for i in range(len(bounds)):
             beliefspace["normative"].append(list(bounds[i]))
         return beliefspace
@@ -111,8 +122,18 @@ def cade(func, max_gen, bounds, population_size, dimension):
     def situationalBeliefspace(beliefspace, best):
         currentBest = beliefspace["situational"]
         # print("current best situational = ", currentBest)
+
         if currentBest is None or best["fitness"] < currentBest["fitness"]:
             beliefspace["situational"] = best
+
+    def topographicalBeliefspace(best, best2):
+        for i in range(dimension):
+            if best["fitness"] < best2["fitness"]:
+                y = mutateTopo()
+            else:
+                y = np.random.normal(0, 1, dimension)
+                # print("y: ", y)
+        # print("length: ", len(beliefspace["topographical"]))
 
     def normativeBeliefspace(beliefspace, accepted):
         for i in range(len(beliefspace["normative"])):
@@ -131,7 +152,7 @@ def cade(func, max_gen, bounds, population_size, dimension):
         ser = list()
         cer = list()
 
-        # evaluate the population
+        # evaluate the population using the obj()
         for i in population:
             i["fitness"] = func(i["individuals"])
 
@@ -147,13 +168,20 @@ def cade(func, max_gen, bounds, population_size, dimension):
             for i in individualsPop:
                 i["fitness"] = func(i["individuals"])
             population = selection(population_size, individualsPop + population, elites)
-            # current best
-            best = min(population, key=lambda i: i["fitness"])
+            # print("new population: \n", population)
 
-            # situational knowledge update
-            situationalBeliefspace(beliefspace, best)
+            # current best
+            best2 = min(population, key=lambda i: i["fitness"])
+            # print(k, "best CA : ", best2)
+
+            # update situational knowledge source
+            situationalBeliefspace(beliefspace, best2)
             fitnessData.append(best["fitness"])
 
+            # update topographic knowledge source
+            topographicalBeliefspace(best, best2)
+
+            # update Normative knowledge source
             population.sort(key=lambda i: i["fitness"])
             acccepted = population[:acceptedNumber]
             # print("\n\naccepted: ", acccepted, "\n\n")
@@ -165,7 +193,7 @@ def cade(func, max_gen, bounds, population_size, dimension):
             if k == (gens - 1):
                 cer = beliefspace["situational"]["individuals"]
 
-        return ser, cer, beliefspace["situational"]["individuals"], best["fitness"]
+        return ser, cer, beliefspace["situational"]["individuals"], best2["fitness"]
 # -------------------------------------End CA------------------------------------------------
 
     # Evolved CA Population using CA technique
@@ -192,6 +220,7 @@ def cade(func, max_gen, bounds, population_size, dimension):
 
         population_size = len(initial_de_population)
         max_gen = population_size
+        # print("initial_de_population", initial_de_population, "\n")
         fitness = np.asarray([func(ind) for ind in initial_de_population])
         # print("fitness : ", fitness)
         best_index = np.argmin(fitness)
@@ -199,39 +228,51 @@ def cade(func, max_gen, bounds, population_size, dimension):
         best2 = initial_de_population[best_index]
         daho = list()
         baho = list()
+        # print("crossover probability: ", crossover_probability)
+        # print("mutation factor: ", mutation_factor)
 
         for i in range(max_gen):
             for j in range(population_size):
                 indices = [index for index in range(population_size) if index != j]
+                print("indices: ", indices)
 
-                x0, x1, x2 = population[np.random.choice(indices, 3, replace=False)]
+                x0, x1, x2 = initial_de_population[np.random.choice(indices, 3, replace=False)]
+                print("x0, x1, x2: ", x0, x1, x2)
 
-                mutant_vector = np.clip(x0 + mutation_factor * (x1 - x2), 0, 1)
+                mutant_vector = np.clip(x0 + mutation_factor * ((best - x0) + (x1 - x2)), 0, 1)  # DE/Current-to-best/2
+                print("mutant vector:\n", mutant_vector)
 
                 crossover = np.random.rand(dimension) < crossover_probability
 
                 if not np.any(crossover):
                     crossover[np.random.randint(0, dimension)] = True
 
-                trial_vector = np.where(crossover, mutant_vector, population[j])
+                trial_vector = np.where(crossover, mutant_vector, initial_de_population[j])
+                print("trial vector:\n", trial_vector)
 
                 new_population = lower_bound + trial_vector * difference
+                print("new_population:\n", new_population)
 
                 new_fitness = func(new_population)
+                print("new_fitness:\n", new_fitness)
 
                 if new_fitness < fitness[j]:
                     fitness[j] = new_fitness
-                    population[j] = trial_vector
+                    initial_de_population[j] = trial_vector
                     if new_fitness < fitness[best_index]:
                         best_index = j
                         best = new_population
 
                 if new_fitness < fitness[j] and i == (max_gen - 2):
                     fitness[j] = new_fitness
-                    population[j] = trial_vector
+                    initial_de_population[j] = trial_vector
                     if new_fitness < fitness[best_index]:
                         best_index = j
                         best2 = new_population
+                print(i, ":population \n", initial_de_population)
+            mutation_factor = np.random.standard_cauchy(1)
+            # print("mutation factor: ", mutation_factor)
+            crossover_probability = np.random.normal(0.5, 0.1, 1)
 
             yield daho, best2, best, fitness[best_index]
 
@@ -260,9 +301,11 @@ def cade(func, max_gen, bounds, population_size, dimension):
 
     updated_cade_pop = np.concatenate((DE_pop, CA_pop), axis=0)
     fitness_updated_cade = np.asarray([func(ind) for ind in updated_cade_pop])
+
+    number_of_runs = 0
 # ----------------------- loop in the cade algorithm -------------------------------------------
 
-    while quality_func != 1:
+    while number_of_runs < 50:
         fitness_ser = np.asarray([func(ind) for ind in ser])
         fitness_cer = np.asarray([func(ind) for ind in cer])
         fitness_del = np.asarray([func(ind) for ind in DE_pop])
@@ -371,10 +414,3 @@ def cade(func, max_gen, bounds, population_size, dimension):
 for p, q in cade(func, max_gen, bounds, population_size, dimension):
     # print("\n\nCADE population ", p, "\n\nfitness = ", q)
     print("\n\nCADE population ", p, "\n\nfitness = ", q)
-    """
-    y = [1]
-    for i in range(2, population_size+1):
-        y.append(i)
-    plt.plot(y, q)
-    plt.show()
-    """

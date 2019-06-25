@@ -2,8 +2,8 @@ import cadeFunctions
 
 
 print("Functions")
-option = input("Select a function by entering a number between the range of 1 - 15: ")
-
+opt = (input("Select a function by entering a number between the range of 1 - 15: "))
+option = int(opt)
 
 def funct(x):
     if option == 1:

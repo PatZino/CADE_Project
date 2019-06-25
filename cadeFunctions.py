@@ -10,7 +10,7 @@ def function_one(x):
     result = 0
     for i in range(len(x)):
         result += x[i]**2
-    return result / len(x)
+    return result
 
 
 def function_two(x):
