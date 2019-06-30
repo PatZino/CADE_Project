@@ -1,17 +1,15 @@
 import cadeFunctions
 
 
-print("Functions")
-opt = (input("Select a function by entering a number between the range of 1 - 15: "))
+opt = (input("Chosen Function"))
 option = int(opt)
+
 
 def funct(x):
     if option == 1:
-        func1 = cadeFunctions.function_one(x)
-        # print("Summation of X[i]**2\n")
+        print("Summation of X[i]**2\n")
     elif option == 2:
-        func1 = cadeFunctions.function_two(x)
-        # print("Summation of (x[i] ** 2) - (10 * np.cos((2 * np.pi * x[i]) * np.pi/180)) + 10")
+        print("Summation of (x[i] ** 2) - (10 * np.cos((2 * np.pi * x[i]) * np.pi/180)) + 10 \n")
     elif option == 3:
         func1 = cadeFunctions.function_three(x)
     elif option == 4:

@@ -1,8 +1,7 @@
 import numpy as np
 import random
 import functionSelection
-from scipy.stats import  cauchy
-from matplotlib import pyplot as plt
+# import functionDisplay
 
 # ------------------------ Test Functions --------------------------------------
 func = functionSelection.funct
@@ -10,19 +9,18 @@ func = functionSelection.funct
 xin = [2, 3, 5]
 TestFunction = func(xin)
 print("TestFunction: ", TestFunction)
+
 # -----------------------End Test Functions ------------------------------------
 
 # ---------------generate initial parameters of each techniques ----------------
 dimension = 3
-bounds = [(-5, 5)] * dimension
-max_gen = 30
-population_size = 50
+bounds = [(-100, 100)] * dimension
+max_gen = 200
+population_size = 40
 acceptedNumber = round(population_size * 0.20)
 elites = 1
-mutation_factor = np.random.standard_cauchy(1)
-# mutation_factor = 0.5
-crossover_probability = np.random.normal(0.5, 0.1, 1)
-# crossover_probability = 0.5
+mutation_factor = 0.5
+crossover_probability = 0.5
 # ------------------ End initial parameters -------------------------------------
 
 
@@ -45,11 +43,11 @@ def cade(func, max_gen, bounds, population_size, dimension):
     fitness = np.asarray([func(ind) for ind in initial_population])
     # print("\nfitness : \n", fitness, "\n\n")
 
-    # var1 = fitness[:initial_participation_ratio]
-    # print("var1", var1)
-    # best_index = np.argmin(fitness)
-    # best = initial_population[best_index]
-    # print("\nbest : ", best)
+    FEs_best_index = np.argmin(fitness)
+    FEs_best = initial_population[FEs_best_index]
+    FEs_fitness = fitness[FEs_best_index]
+    print("FEs_best: ", FEs_best)
+    print("FEs_fitness: ", FEs_fitness)
 
     # produce a subset of new individuals by each technique T according to the participation ratio
     Auxiliary_population = initial_population[np.random.choice(initial_population.shape[0],
@@ -63,11 +61,74 @@ def cade(func, max_gen, bounds, population_size, dimension):
 
     DE_population = np.asarray(
         [Auxiliary_population[p] for p in range(int(initial_participation_ratio), population_size)])
-    print("Initial DE_population \n", DE_population)
+    # print("Initial DE_population \n", DE_population)
     DEfitness = np.asarray([func(ind) for ind in DE_population])
-    print("\ninitial_DEfitness : \n", DEfitness, "\n\n")
+    # print("\ninitial_DEfitness : \n", DEfitness, "\n\n")
 
-# -------------------------CA-----------------------------------------------------------
+    # ---------------------------------DE---------------------------------------------------------
+    def differential_evolution(func, initial_de_population, mutation_factor,
+                               crossover_probability):
+
+        population_size = len(initial_de_population)
+        fitness = np.asarray([func(ind) for ind in initial_de_population])
+        # print("fitness : ", fitness)
+        best_index = np.argmin(fitness)
+        best = initial_de_population[best_index]
+        bah = ()
+
+        for i in range(max_gen):
+            for j in range(population_size):
+                indices = [index for index in range(population_size) if index != j]
+                # print("indices: ", indices)
+
+                x0, x1, x2 = population[np.random.choice(indices, 3, replace=False)]
+                # print("x0, x1, x2: ", x0, x1, x2)
+
+                mutant_vector = np.clip(x0 + mutation_factor * ((best - x0) + (x1 - x2)), 0, 1)  # DE/Current-to-best/2
+                # print("mutant vector:\n", mutant_vector)
+
+                crossover = np.random.rand(dimension) < crossover_probability
+
+                if not np.any(crossover):
+                    crossover[np.random.randint(0, dimension)] = True
+
+                trial_vector = np.where(crossover, mutant_vector, population[j])
+                # print("trial vector:\n", trial_vector)
+
+                new_population = lower_bound + trial_vector * difference
+                # print("new_population:\n", new_population)
+
+                new_fitness = func(new_population)
+                # print("new_fitness:\n", new_fitness)
+
+                if new_fitness < fitness[j]:
+                    fitness[j] = new_fitness
+                    population[j] = trial_vector
+                    if new_fitness < fitness[best_index]:
+                        best_index = j
+                        best = new_population
+
+                if [max_gen - 2]:
+                    bah = best
+                    mutation_factor = np.random.standard_cauchy(1)
+                    # print("mutation factor: ", mutation_factor)
+                    crossover_probability = np.random.normal(0.5, 0.1, 1)
+
+            yield bah, best, fitness[best_index]
+
+    # ----------------------------------End DE----------------------------------------------------
+
+    # Evolved DE Population using DE technique
+    DE = list()
+    DE_pop = list()
+    bah1 = list()
+    for bah, best, fitness in differential_evolution(func, DE_population, mutation_factor,
+                                                     crossover_probability):
+        DE_pop.append(best)
+        DE.append(fitness)
+        bah1.append(bah)
+
+    # -------------------------CA-----------------------------------------------------------
 
     def rand_in_bounds(min, max):
         return min + ((max - min) * random.random())
@@ -83,8 +144,8 @@ def cade(func, max_gen, bounds, population_size, dimension):
             v.append(x)
         return {"individuals": v}
 
-    def mutateTopo():
-        y = np.random.normal(0, 1, dimension)
+    def mutateTopo(c):
+        y = np.random.normal(0, 1, c)
         return y
 
     def selection(population_size, candidates, elites):
@@ -124,17 +185,22 @@ def cade(func, max_gen, bounds, population_size, dimension):
     def situationalBeliefspace(beliefspace, best):
         currentBest = beliefspace["situational"]
         # print("current best situational = ", currentBest)
-
         if currentBest is None or best["fitness"] < currentBest["fitness"]:
             beliefspace["situational"] = best
 
-    def topographicalBeliefspace(best, best2):
-        for i in range(dimension):
-            if best["fitness"] < best2["fitness"]:
-                y = mutateTopo()
+    def topographicalBeliefspace(gen, best, best2, dim):
+        if i != gen:
+            if best2["fitness"] < best["fitness"]:
+                y = mutateTopo(dim)
             else:
-                y = np.random.normal(0, 1, dimension)
+                y = mutateTopo(dim)
+        else:
+            if best2["fitness"] < best["fitness"]:
+                y = mutateTopo(dim)
+            else:
+                y = mutateTopo(dim)
                 # print("y: ", y)
+        return y
         # print("length: ", len(beliefspace["topographical"]))
 
     def normativeBeliefspace(beliefspace, accepted):
@@ -181,7 +247,7 @@ def cade(func, max_gen, bounds, population_size, dimension):
             fitnessData.append(best["fitness"])
 
             # update topographic knowledge source
-            topographicalBeliefspace(best, best2)
+            topographicalBeliefspace(gens, best, best2, dimension)
 
             # update Normative knowledge source
             population.sort(key=lambda i: i["fitness"])
@@ -203,98 +269,22 @@ def cade(func, max_gen, bounds, population_size, dimension):
     CA_pop = list()
     ser = list()
     cer = list()
-    for i in range(len(CA_population)):
+    for i in range(max_gen):
         initial_ca_population = CA_population.tolist()
         ser1, cer1, Evolved_CA, Evolved_CA_Fitness = culturalAlgorithm(initial_ca_population, bounds, acceptedNumber, elites)
         CA.append(Evolved_CA_Fitness)
         CA_pop.append(Evolved_CA)
         ser.append(ser1)
         cer.append(cer1)
-
-# ---------------------------------DE---------------------------------------------------------
-    def differential_evolution(func, initial_de_population, mutation_factor,
-                               crossover_probability):
-
-        population_size = len(initial_de_population)
-        # max_gen = population_size
-        # pop = np.random.rand(population_size, dimension)
-        # print("initial_de_population", initial_de_population, "\n")
-        fitness = np.asarray([func(ind) for ind in initial_de_population])
-        # print("fitness : ", fitness)
-        best_index = np.argmin(fitness)
-        best = initial_de_population[best_index]
-        bah = ()
-
-        # print("crossover probability: ", crossover_probability)
-        # print("mutation factor: ", mutation_factor)
-
-        for i in range(max_gen):
-            for j in range(population_size):
-                indices = [index for index in range(population_size) if index != j]
-                # print("indices: ", indices)
-
-                x0, x1, x2 = initial_de_population[np.random.choice(indices, 3, replace=False)]
-                # print("x0, x1, x2: ", x0, x1, x2)
-
-                mutant_vector = np.clip(x0 + mutation_factor * ((best - x0) + (x1 - x2)), 0, 1)  # DE/Current-to-best/2
-                # print("mutant vector:\n", mutant_vector)
-
-                crossover = np.random.rand(dimension) < crossover_probability
-
-                if not np.any(crossover):
-                    crossover[np.random.randint(0, dimension)] = True
-
-                trial_vector = np.where(crossover, mutant_vector, initial_de_population[j])
-                # print("trial vector:\n", trial_vector)
-
-                new_population = lower_bound + trial_vector * difference
-                # print("new_population:\n", new_population)
-
-                new_fitness = func(new_population)
-                # print("new_fitness:\n", new_fitness)
-
-                if new_fitness < fitness[j]:
-                    fitness[j] = new_fitness
-                    initial_de_population[j] = trial_vector
-                    if new_fitness < fitness[best_index]:
-                        best_index = j
-                        best = new_population
-                        # print("best: ", best)
-
-            # print(i, ":population \n", initial_de_population)
-                if i == (max_gen-2):
-                    if new_fitness < fitness[j]:
-                        fitness[j] = new_fitness
-                        initial_de_population[j] = trial_vector
-                        if new_fitness < fitness[best_index]:
-                            best_index = j
-                            best = new_population
-                    bah = best
-                    mutation_factor = np.random.standard_cauchy(1)
-                    # print("mutation factor: ", mutation_factor)
-                    crossover_probability = np.random.normal(0.5, 0.1, 1)
-
-            yield bah, best, fitness[best_index]
-
-# ----------------------------------End DE----------------------------------------------------
-
-    # Evolved DE Population using DE technique
-    DE = list()
-    DE_pop = list()
-    for bah, best, fitness in differential_evolution(func, DE_population, mutation_factor,
-                                                crossover_probability):
-        DE_pop.append(best)
-        DE.append(fitness)
-        print("bah:\n", bah)
-        # print("de population: \n", de_population)
-
-    # print("Best DE POP:\n", best_DE_pop)
-
-
 # ---------------------------------------------------------------------------------------------
 
     updated_cade_pop = np.concatenate((DE_pop, CA_pop), axis=0)
     fitness_updated_cade = np.asarray([func(ind) for ind in updated_cade_pop])
+    best_index = np.argmin(fitness_updated_cade)
+    cade_best = updated_cade_pop[best_index]
+    print("cade_best: ", cade_best)
+    cade_best_fitness = fitness_updated_cade[best_index]
+    print("cade_best_fitness: ", cade_best_fitness, "\n\n")
 
     number_of_runs = 0
     diffVetorCA = 0
@@ -305,7 +295,7 @@ def cade(func, max_gen, bounds, population_size, dimension):
         fitness_ser = np.asarray([func(ind) for ind in ser])
         fitness_cer = np.asarray([func(ind) for ind in cer])
         fitness_del = np.asarray([func(ind) for ind in DE_pop])
-        fitness_del2 = np.asarray([func(ind) for ind in bah])
+        fitness_del2 = np.asarray([func(ind) for ind in bah1])
 
         s = list()
         d = list()
@@ -323,7 +313,7 @@ def cade(func, max_gen, bounds, population_size, dimension):
                 s.append(t)
 
         # print("\ns: ", s, "\n")
-        print("number of successful Trial Vector for CA = ", numTrialVectorCA)
+        # print("number of successful Trial Vector for CA = ", numTrialVectorCA)
 
         # Number of trial vector for DE algorithm
         for j in range(len(DE_pop)):
@@ -335,16 +325,11 @@ def cade(func, max_gen, bounds, population_size, dimension):
                 t = 0
                 d.append(t)
 
-        # print("\nd: ", d, "\n")
-        print("number of successful Trial Vector for DE = ", numTrialVectorDE)
-
         for j in range(numTrialVectorCA):
             diffVetorCA += (fitness_ser[j]-fitness_cer[j])
-        # print("diffVetorCA: ", diffVetorCA)
 
         for j in range(numTrialVectorCA):
             diffVetorDE += (fitness_del[j]-fitness_del2[j])
-        # print("diffVetorDE: ", diffVetorDE)
 
         # determining the best technique and calcolating quality function
 
@@ -355,7 +340,6 @@ def cade(func, max_gen, bounds, population_size, dimension):
         else:
             quality_func = (diffVetorDE - diffVetorCA) / diffVetorDE
 
-        # print("quality function: ", quality_func)
         if quality_func == 1:
             break
 
@@ -364,10 +348,15 @@ def cade(func, max_gen, bounds, population_size, dimension):
 
         updated_cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)  # new cade population
         fitness_updated_cade = np.asarray([func(ind) for ind in updated_cade_pop])  # updated fitness value
+        best_index = np.argmin(fitness_updated_cade)
+        cade_best = updated_cade_pop[best_index]
+        print("cade_best: ", cade_best)
+        cade_best_fitness = fitness_updated_cade[best_index]
+        print("cade_best_fitness: ", cade_best_fitness, "\n\n")
         updated_Auxiliary_pop = updated_cade_pop[np.random.choice(updated_cade_pop.shape[0],
                                                                   population_size, replace=False), :]
 
-        if numTrialVectorCA > numTrialVectorDE:
+        if numTrialVectorCA < numTrialVectorDE:
             updated_DE_pop = np.asarray(
                 [updated_Auxiliary_pop[p] for p in range(int(participation_ratio), population_size)])
             updated_CA_pop = np.asarray([updated_Auxiliary_pop[p] for p in range(int(participation_ratio))])
@@ -394,13 +383,13 @@ def cade(func, max_gen, bounds, population_size, dimension):
         DE = list()
         DE_pop = list()
         bah1 = list()
-        updated_DE_pop = list()
+        # updated_DE_pop = list()
         for bah, best, fitness in differential_evolution(func, updated_DE_pop, mutation_factor,
                                                          crossover_probability):
             DE_pop.append(best)
             DE.append(fitness)
             bah1.append(bah)
-            DE_pop.append(updated_DE_pop)
+            # DE_pop.append(updated_DE_pop)
 
         # cade_pop = np.concatenate((CA_pop, DE_pop), axis=0)
 
@@ -408,5 +397,5 @@ def cade(func, max_gen, bounds, population_size, dimension):
 
 
 for p, q in cade(func, max_gen, bounds, population_size, dimension):
-    # print("\n\nCADE population ", p, "\n\nfitness = ", q)
-    print("\n\nCADE population ", p, "\n\nfitness = ", q)
+    print("CADE population ", p, "\n\nfitness = ", q)
+
