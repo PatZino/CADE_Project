@@ -95,9 +95,10 @@ def function_ten(x):
 def function_eleven(x):
     a = 0
     b = 1
-    for i in range(len(x)):
+    for i in range(1, len(x)):
+       c = (x[i]/np.sqrt(i))
        a += np.square(x[i])
-       b *= (np.cos(x[i]/np.sqrt(i)) * np.pi/180)
+       b *= (np.cos(c) * np.pi/180)
     result = (1/4000) * a - b + 1
     return result
 

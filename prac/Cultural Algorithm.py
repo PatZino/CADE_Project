@@ -14,7 +14,7 @@ bounds = [(-10, 10)] * dimension
 max_gen = 200
 population_size = 40
 acceptedNumber = round(population_size * 0.20)
-elites = 1
+els = 1
 # ------------------ End initial parameters -------------------------------------
 
 # -------------------------CA-----------------------------------------------------------
@@ -47,10 +47,10 @@ def mutateTopo(c):
     return y
 
 
-def selection(population_size, candidates, elites):
+def selection(population_size, candidates, els):
     new_population = list()
     candidates.sort(key=lambda b: b["fitness"])
-    for i in range(elites):
+    for i in range(els):
         withstand = candidates.pop(0)
         new_population.append(withstand)
     for i in range(population_size):
@@ -114,7 +114,7 @@ def normativeBeliefspace(beliefspace, accepted):
         beliefspace["normative"][i][1] = acceptedMax["individuals"][i]
 
 
-def culturalAlgorithm(cultural_algorithm_pop, bounds,  acceptedNumber, elites):
+def culturalAlgorithm(cultural_algorithm_pop, bounds,  acceptedNumber, els):
     population = format_population(cultural_algorithm_pop)
     population_size = len(population)
     beliefspace = beliefspaceInitialization(bounds)
@@ -135,7 +135,7 @@ def culturalAlgorithm(cultural_algorithm_pop, bounds,  acceptedNumber, elites):
             individualsPop.append(newIndividualsPop)
         for i in individualsPop:
             i["fitness"] = func(i["individuals"])
-        population = selection(population_size, individualsPop + population, elites)
+        population = selection(population_size, individualsPop + population, els)
         # print("new population: \n", population)
 
         # current best
@@ -164,7 +164,7 @@ CA_fit_list = list()
 CA_pop_list = list()
 for i in range(max_gen):
     cultural_algorithm_pop = ca_population.tolist()
-    Evolved_CA, Evolved_CA_fitness = culturalAlgorithm(ca_population, bounds, acceptedNumber, elites)
+    Evolved_CA, Evolved_CA_fitness = culturalAlgorithm(ca_population, bounds, acceptedNumber, els)
     CA_pop.append(Evolved_CA)
     CA_pop_list = list(CA_pop)
     CA_fit.append(Evolved_CA_fitness)
